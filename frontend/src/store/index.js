@@ -2,7 +2,7 @@ import { createStore, compose } from 'redux';
 import rootReducer from 'reducers';
 
 const initialState = {};
-const enhancers = {}
+const enhancers = []
 
 //DevTools Extension for debugging in Chrome
 if (process.env.NODE_ENV === 'development') {
