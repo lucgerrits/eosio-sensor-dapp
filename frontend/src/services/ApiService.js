@@ -108,6 +108,7 @@ class ApiService {
         "code": process.env.REACT_APP_EOS_CONTRACT_NAME,
         "scope": process.env.REACT_APP_EOS_CONTRACT_NAME,
         "table": "logs",
+        "reverse": true,
         // "lower_bound": username,
       });
       return result.rows;
