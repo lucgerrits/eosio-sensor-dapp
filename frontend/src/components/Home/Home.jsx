@@ -130,26 +130,13 @@ class Home extends Component {
     }
 
     // Bind functions
-    this.loadUser = this.loadUser.bind(this);
     this.logout = this.logout.bind(this);
     this.handleDrawerOpen = this.handleDrawerOpen.bind(this);
     this.handleDrawerClose = this.handleDrawerClose.bind(this);
     this.handleChangePage = this.handleChangePage.bind(this);
-    // Call `loadUser` before mounting the app
-    this.loadUser();
+
   }
 
-  // Get latest user object from blockchain
-  loadUser() {
-    // Extract `setUser` of `UserAction` and `user.name` of UserReducer from redux
-    const { setUser, user: { name } } = this.props;
-    // Send request the blockchain by calling the ApiService,
-    return ApiService.getUserByName(name).then(user => {
-      setUser({
-        log_count: user.log_count
-      });
-    });
-  }
 
   logout = () => {
     const { setUser } = this.props;
