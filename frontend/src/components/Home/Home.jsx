@@ -146,7 +146,7 @@ class Home extends Component {
     // Send request the blockchain by calling the ApiService,
     return ApiService.getUserByName(name).then(user => {
       setUser({
-        log_count: user.win_count
+        log_count: user.log_count
       });
     });
   }
