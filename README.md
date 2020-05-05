@@ -63,7 +63,7 @@ After that you can add & view the sensors logs you sended via the dapp.
 
 ## TODO
 
-- Fix sensor log count using an increment in the smart contract
+- ~~Fix sensor log count using an increment in the smart contract~~
 - Add Ricardian contract
 - Add en/decryption
 - share system between accounts
