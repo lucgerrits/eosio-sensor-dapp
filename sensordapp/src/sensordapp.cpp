@@ -23,17 +23,32 @@ ACTION sensordapp::log(name username, uint64_t sensor_uid, string date, string d
 {
   require_auth(username);
 
-  // Init the _logs table
-  logs_table _logs(get_self(), get_self().value);
+  users_table _users(get_self(), get_self().value);
+  auto user_itr = _users.find(username.value);
+  if (user_itr == _users.end())
+  {
+    //user not found
+    eosio::check(true == false, "User not found. Please login first.");
+  }
+  else
+  {
+    //if user found increment his log count, and add log
+    uint64_t current_count = user_itr->log_count;
+    _users.modify(user_itr, username, [&](auto &user) {
+      user.log_count = current_count + 1;
+    });
 
-  // Create a data record
-  _logs.emplace(username, [&](auto &log) {
-    log.id = _logs.available_primary_key();
-    log.username = username;
-    log.sensor_uid = sensor_uid;
-    log.date = date;
-    log.data = data;
-  });
+    // Init the _logs table
+    logs_table _logs(get_self(), get_self().value);
+    // Create a data record
+    _logs.emplace(username, [&](auto &log) {
+      log.id = _logs.available_primary_key();
+      log.username = username;
+      log.sensor_uid = sensor_uid;
+      log.date = date;
+      log.data = data;
+    });
+  }
 }
 
 ACTION sensordapp::clear()
