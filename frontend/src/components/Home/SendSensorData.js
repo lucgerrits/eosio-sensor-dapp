@@ -76,7 +76,8 @@ class SensorLog extends Component {
             username: user.name
         }
         return ApiService.sendSensorData(form)
-            .then(() => {
+            .then((tnx) => {
+                console.log(tnx)
                 this.handleBackdropClose();
                 this.setState({ error: false });
                 this.setState({ success: true });

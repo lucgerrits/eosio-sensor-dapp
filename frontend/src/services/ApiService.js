@@ -120,13 +120,23 @@ class ApiService {
   static sendSensorData({ username, key, sensor_uid, date, data }) {
     return new Promise((resolve, reject) => {
       takeAction("log", { username: username, sensor_uid: sensor_uid, date: date, data: data })
-        .then(() => {
-          resolve();
+        .then((tnx) => {
+          resolve(tnx);
         })
         .catch(err => {
           reject(err);
         });
     });
+  }
+
+  static async getTnx(tnx_id) {
+    try {
+      const rpc = new JsonRpc(process.env.REACT_APP_EOS_HTTP_ENDPOINT);
+      const result = await rpc.history_get_transaction(tnx_id);
+      return result;
+    } catch (err) {
+      console.error(err);
+    }
   }
 
 }
