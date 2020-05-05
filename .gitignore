@@ -2,3 +2,5 @@
 *.wasm
 
 node_modules/
+
+frontend/build/
