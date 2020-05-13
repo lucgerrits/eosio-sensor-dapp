@@ -7,6 +7,8 @@ import Button from '@material-ui/core/Button';
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Box from '@material-ui/core/Box';
+import Modal from '@material-ui/core/Modal';
+import { RicardianContractFactory } from 'ricardian-template-toolkit'
 
 import Title from './Title';
 
@@ -25,7 +27,19 @@ const useStyles = (theme) => ({
     },
     hiddenField: {
         display: "none"
-    }
+    },
+    contractDocument: {
+        padding: "10px",
+        border: "black thin solid",
+        background: "#e8e9ff",
+        marginBottom: "10px",
+        "& .variable": {
+            display: "inline",
+            color: "DarkRed",
+            fontStyle: "italic",
+            fontWeight: "bold",
+        }
+    },
 });
 
 // function preventDefault(event) {
@@ -45,14 +59,24 @@ class SensorLog extends Component {
 
         // State for form data and error message
         this.state = {
+            form: false,
+            abi: null,
+            open: false,
             BackdropOpen: false,
             success: false,
             error: false,
+            confirm: false,
+            ricardian_body: "",
         }
         // Bind functions
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleBackdropClose = this.handleBackdropClose.bind(this);
         this.handleBackdropOpen = this.handleBackdropOpen.bind(this);
+        this.getTnxDetails = this.getTnxDetails.bind(this);
+        this.loadAbi = this.loadAbi.bind(this);
+
+
+        this.loadAbi();
     }
 
     handleBackdropClose = () => {
@@ -62,79 +86,172 @@ class SensorLog extends Component {
         this.setState({ BackdropOpen: false });
     };
 
+    getTnxDetails(tnx_id) {
+        return ApiService.getTnx(tnx_id)
+            .then((tnx_data) => {
+                console.log(tnx_data);
+            })
+            .catch(err => {
+                console.error(err);
+            });
+    }
+
     // Handle form submission to call api
     handleSubmit(event) {
         // Stop the default form submit browser behaviour
         event.preventDefault();
-        this.handleBackdropOpen();
-        // Extract `form` state
-        const { user } = this.props;
-        const form = {
-            sensor_uid: event.target.elements.sensor_uid.value,
-            date: event.target.elements.date.value,
-            data: event.target.elements.data.value,
-            username: user.name
+        var { confirm, form, abi } = this.state;
+        if (!confirm) {
+            const { user } = this.props;
+            const formdata = {
+                sensor_uid: event.target.elements.sensor_uid.value,
+                date: event.target.elements.date.value,
+                data: event.target.elements.data.value,
+                username: user.name
+            }
+            this.setState({ ricardian_body: this.makeRicardian(formdata, abi) });
+            this.setState({ open: true });
+            this.setState({ confirm: true });
+            this.setState({ form: formdata });
+        } else {
+            this.setState({ open: false });
+            this.handleBackdropOpen();
+            // Extract `form` state
+            ApiService.sendSensorData(form)
+                .then((tnx) => {
+                    console.log(tnx)
+                    this.getTnxDetails(tnx.transaction_id);
+                    this.handleBackdropClose();
+                    this.setState({ error: false });
+                    this.setState({ success: true });
+                    this.setState({ confirm: false });
+                    this.setState({ form: false });
+                    setTimeout(() => {
+                        this.setState({ success: false });
+                    }, 3000)
+                })
+                .catch(err => {
+                    // this.setState({ error: err.toString() + "\n\n" + err.stack.toString()});
+                    this.setState({ error: err.toString() });
+                    this.handleBackdropClose();
+                });
         }
-        return ApiService.sendSensorData(form)
-            .then((tnx) => {
-                console.log(tnx)
-                this.handleBackdropClose();
-                this.setState({ error: false });
-                this.setState({ success: true });
-                setTimeout(() => {
-                    this.setState({ success: false });
-                }, 3000)
-            })
-            .catch(err => {
-                // this.setState({ error: err.toString() + "\n\n" + err.stack.toString()});
-                this.setState({ error: err.toString() });
-                this.handleBackdropClose();
-            });
+    }
+
+    makeRicardian(form, abi) {
+        const factory = new RicardianContractFactory()
+        const config = {
+            abi: abi,
+            transaction: {
+                "actions": [
+                    {
+                        "account": "sensordapp",
+                        "name": "log",
+                        "authorization": [
+                            {
+                                "actor": form.username,
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "username": form.username,
+                            "sensor_uid": form.sensor_uid,
+                            "date": form.date,
+                            "data": form.data
+                        },
+                    }
+                ]
+            },
+            actionIndex: 0,
+            // Optional - defaults to 3
+            // maxPasses: 3,
+            // Optional - developer flag - if true ignore errors if a variable
+            // is specified in the contract but no value is found to substitute
+            allowUnusedVariables: true
+        }
+        const ricardianContract = factory.create(config)
+
+        const metadata = ricardianContract.getMetadata()
+        const body = ricardianContract.getHtml()
+        return body;
+    }
+
+    // Get latest user object from blockchain
+    loadAbi() {
+        // Extract `setUser` of `UserAction` and `user.name` of UserReducer from redux
+        const { user: { name } } = this.props;
+
+        // Send request the blockchain by calling the ApiService,
+        // Get the user object and store the `win_count`, `lost_count` and `game_data` object
+        return ApiService.getAbiInfo(name).then(data => {
+            this.setState({ abi: data.abi })
+            console.log(data.abi)
+        }).catch((err) => {
+            console.log(err)
+        });
     }
 
     render() {
         Moment.locale('fr');
         const { classes, user } = this.props;
-        const { error, success, BackdropOpen } = this.state;
+        const { confirm, open, ricardian_body, error, success, BackdropOpen } = this.state;
+
         return (
             <Container component="main" maxWidth="lg">
                 <Title>Add Sensor Log <small>(Using user: {user.name})</small></Title>
                 <form className={classes.form} onSubmit={this.handleSubmit}>
-                    <TextField
-                        fullWidth
-                        label="Sensor UID"
-                        defaultValue="001"
-                        helperText="An unique ID for the sensor"
-                        variant="outlined"
-                        name="sensor_uid"
-                    />
-                    <TextField
-                        fullWidth
-                        label="Date"
-                        variant="outlined"
-                        defaultValue={Moment().format()}
-                        helperText="Current date"
-                        name="date"
-                        margin="normal"
-                        disabled
-                    />
-                    <TextField
-                        fullWidth
-                        label="Data"
-                        defaultValue={`Some data given at ${Moment().format()}`}
-                        helperText="Sensor information to save inside EOS"
-                        name="data"
-                        variant="outlined"
-                    />
-                    <Button
-                        type="submit"
-                        fullWidth
-                        variant="contained"
-                        color="primary"
-                        className={classes.submit}
-                    >
-                        Submit
-                        </Button>
+                    {!confirm && (<div>
+                        <TextField
+                            fullWidth
+                            label="Sensor UID"
+                            defaultValue="001"
+                            helperText="An unique ID for the sensor"
+                            variant="outlined"
+                            name="sensor_uid"
+                        />
+                        <TextField
+                            fullWidth
+                            label="Date"
+                            variant="outlined"
+                            defaultValue={Moment().format()}
+                            helperText="Current date"
+                            name="date"
+                            margin="normal"
+                            disabled
+                        />
+                        <TextField
+                            fullWidth
+                            label="Data"
+                            defaultValue={`Some data given at ${Moment().format()}`}
+                            helperText="Sensor information to save inside EOS"
+                            name="data"
+                            variant="outlined"
+                        />
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            color="primary"
+                            className={classes.submit}
+                        >
+                            Open Ricardian Contract
+                    </Button>
+                    </div>)}
+                    <Box mt={2} color="">
+                        {open && <div className={classes.contractDocument} dangerouslySetInnerHTML={{ __html: ricardian_body }}></div>}
+                    </Box>
+                    {confirm && (
+                        <div><Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            color="primary"
+                            className={classes.submit}
+                            mb={8}
+                        >
+                            Accept &amp; Submit
+                    </Button>
+                        </div>)}
                     <Box mt={8} color="success.main">
                         {success && <p>Success</p>}
                     </Box>

@@ -220,7 +220,7 @@ class Home extends Component {
                 <ListItemIcon>
                   <SettingsInputAntennaIcon />
                 </ListItemIcon>
-                <ListItemText primary="Sensors" />
+                <ListItemText primary="Sensors Data" />
               </ListItem>
               <ListItem button onClick={this.handleChangePage("about")} >
                 <ListItemIcon>

@@ -1,21 +1,19 @@
 <h1 class="contract"> log </h1>
-
-Stub for log action's ricardian contract
-
-Input parameters:
-
-* `user` (string to include in the output)
-
-Implied parameters: 
-
-* `account_name` (name of the party invoking and signing the contract)
-
-### Intent
-INTENT. The intention of the author and the invoker of this contract is to log data of a sensor and increment the author log count. It shall have no other effect.
-
-### Term
-TERM. This Contract expires at the conclusion of code execution.
-
+---
+spec_version: 0.0.0
+title: Log data
+summary: Create a log by {{username}}"
+icon: //256x256.png#12018B4A964E45D3741E7FA206F473449536868630DA15736AB00BB9A4B75BB1
+---
+I, {{username}}, author of the log, certify that I am the original creator of the data.
+<br/>
+The data record consist in: 
+<ul>
+    <li>username: {{username}}</li>
+    <li>sensor_uid: {{sensor_uid}}</li>
+    <li>date: {{date}}</li>
+    <li>data: {{data}}</li>
+</ul>
 
 <h1 class="contract"> clear </h1>
 

@@ -1,10 +1,14 @@
 import { Api, JsonRpc } from 'eosjs';
 import { JsSignatureProvider } from 'eosjs/dist/eosjs-jssig'
 
+function getEosApiUrl() {
+  return localStorage.getItem("REACT_APP_EOS_HTTP_ENDPOINT") || process.env.REACT_APP_EOS_HTTP_ENDPOINT;
+}
+
 // Main action call to blockchain
 async function takeAction(action, dataValue) {
   const privateKey = localStorage.getItem("helloworld_key");
-  const rpc = new JsonRpc(process.env.REACT_APP_EOS_HTTP_ENDPOINT);
+  const rpc = new JsonRpc(getEosApiUrl());
   const signatureProvider = new JsSignatureProvider([privateKey]);
   const api = new Api({ rpc, signatureProvider, textDecoder: new TextDecoder(), textEncoder: new TextEncoder() });
 
@@ -75,7 +79,7 @@ class ApiService {
 
   static async getUserByName(username) {
     try {
-      const rpc = new JsonRpc(process.env.REACT_APP_EOS_HTTP_ENDPOINT);
+      const rpc = new JsonRpc(getEosApiUrl());
       const result = await rpc.get_table_rows({
         "json": true,
         "code": process.env.REACT_APP_EOS_CONTRACT_NAME,    // contract who owns the table
@@ -92,7 +96,7 @@ class ApiService {
 
   static async getAbiInfo(username) {
     try {
-      const rpc = new JsonRpc(process.env.REACT_APP_EOS_HTTP_ENDPOINT);
+      const rpc = new JsonRpc(getEosApiUrl());
       const result = await rpc.get_abi(process.env.REACT_APP_EOS_CONTRACT_NAME);
       return result;
     } catch (err) {
@@ -102,7 +106,7 @@ class ApiService {
 
   static async getUserLogs(username) {
     try {
-      const rpc = new JsonRpc(process.env.REACT_APP_EOS_HTTP_ENDPOINT);
+      const rpc = new JsonRpc(getEosApiUrl());
       const result = await rpc.get_table_rows({
         "json": true,
         "code": process.env.REACT_APP_EOS_CONTRACT_NAME,
@@ -131,7 +135,7 @@ class ApiService {
 
   static async getTnx(tnx_id) {
     try {
-      const rpc = new JsonRpc(process.env.REACT_APP_EOS_HTTP_ENDPOINT);
+      const rpc = new JsonRpc(getEosApiUrl());
       const result = await rpc.history_get_transaction(tnx_id);
       return result;
     } catch (err) {
